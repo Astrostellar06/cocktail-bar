@@ -8,12 +8,38 @@ const BASE_IDS = new Set(BASE_COCKTAILS.map((c) => c.id))
 
 export const isBaseCocktail = (id: string) => BASE_IDS.has(id)
 
-export function addBottle(ingredientId: string, label?: string) {
-  return db.bottles.add({ ingredientId, label: label?.trim() || undefined, addedAt: Date.now() })
+export interface BottleDetails {
+  label?: string
+  abv?: number
+  image?: string
+  barcode?: string
 }
 
-export function updateBottle(id: number, changes: { ingredientId?: string; label?: string }) {
-  return db.bottles.update(id, { ...changes, label: changes.label?.trim() || undefined })
+/** Ajoute une bouteille au bar ; l'ingrédient sort de la liste de courses. */
+export async function addBottle(ingredientId: string, details: BottleDetails = {}): Promise<number> {
+  return db.transaction('rw', db.bottles, db.shopping, async () => {
+    await db.shopping.delete(ingredientId)
+    return db.bottles.add({ ingredientId, ...cleanDetails(details), addedAt: Date.now() })
+  })
+}
+
+/** Ne modifie que les champs fournis (un champ fourni vide est effacé). */
+export function updateBottle(id: number, changes: BottleDetails & { ingredientId?: string }) {
+  const clean = cleanDetails(changes)
+  const update = Object.fromEntries(
+    Object.keys(changes).map((key) => [key, key in clean ? clean[key as keyof BottleDetails] : changes[key as 'ingredientId']]),
+  )
+  return db.bottles.update(id, update)
+}
+
+/** Champs vides → absents (le degré vide reprend celui du type d'ingrédient). */
+function cleanDetails({ label, abv, image, barcode }: BottleDetails): BottleDetails {
+  return {
+    label: label?.trim() || undefined,
+    abv: abv !== undefined && Number.isFinite(abv) && abv > 0 ? abv : undefined,
+    image: image || undefined,
+    barcode: barcode || undefined,
+  }
 }
 
 export function removeBottle(id: number) {
@@ -21,8 +47,20 @@ export function removeBottle(id: number) {
 }
 
 export async function setPantry(ingredientId: string, present: boolean) {
-  if (present) await db.pantry.put({ ingredientId })
-  else await db.pantry.delete(ingredientId)
+  await db.transaction('rw', db.pantry, db.shopping, async () => {
+    if (present) {
+      await db.pantry.put({ ingredientId })
+      await db.shopping.delete(ingredientId)
+    } else {
+      await db.pantry.delete(ingredientId)
+    }
+  })
+}
+
+/** Ajoute ou retire un ingrédient de la liste de courses. */
+export async function setShopping(ingredientId: string, wanted: boolean) {
+  if (wanted) await db.shopping.put({ ingredientId, addedAt: Date.now() })
+  else await db.shopping.delete(ingredientId)
 }
 
 /** « Je l'ai » : ajoute une bouteille ou coche le garde-manger selon le rayon. */

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
+import { DialogProvider } from './components/Dialog'
 import { ToastProvider } from './components/Toast'
 import { BarProvider } from './state/BarContext'
 import './styles/global.css'
@@ -11,9 +12,11 @@ navigator.storage?.persist?.()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
-      <BarProvider>
-        <App />
-      </BarProvider>
+      <DialogProvider>
+        <BarProvider>
+          <App />
+        </BarProvider>
+      </DialogProvider>
     </ToastProvider>
   </StrictMode>,
 )

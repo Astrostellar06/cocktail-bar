@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { CocktailCard } from '../../components/CocktailCard'
 import { CloseIcon, FilterIcon, GlassIcon, HeartIcon, PlusIcon, SearchIcon } from '../../components/icons'
 import { IngredientList } from '../../components/IngredientList'
+import { Select } from '../../components/Select'
 import { Sheet } from '../../components/Sheet'
 import { FAMILIES } from '../../data/ingredients'
 import { containsFilter, type CocktailCheck, type CocktailStatus } from '../../lib/matching'
@@ -169,21 +170,17 @@ export function CocktailsPage() {
 
       <div className="list-toolbar">
         <span className="muted">{plural(list.length, 'cocktail')}</span>
-        <label className="row">
+        <div className="row">
           <span className="muted">Trier</span>
-          <select
-            className="select sm"
+          <Select
+            small
+            title="Trier les cocktails"
             value={sort}
+            options={sorts.map((s) => ({ value: s.id, label: s.label }))}
             // Le tri par défaut de l'onglet n'est pas mémorisé : chaque onglet garde ainsi le sien.
-            onChange={(e) => update({ tri: e.target.value === defaultSort(view) ? null : e.target.value })}
-          >
-            {sorts.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={(value) => update({ tri: value === defaultSort(view) ? null : value })}
+          />
+        </div>
       </div>
 
       {list.length > 0 ? (

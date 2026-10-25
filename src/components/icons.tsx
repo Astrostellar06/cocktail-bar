@@ -95,7 +95,36 @@ export const UploadIcon = (p: IconProps) => (
     <path d="M12 15V4M7 9l5-5 5 5M5 20h14" />
   </Icon>
 )
-export const HeartIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+export const ChevronDownIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Icon>
+)
+export const CartIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
+  <Icon {...p}>
+    <path d="M3 4h2.5l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.3a1.5 1.5 0 0 0 1.5-1.1L21 8H6.3" fill="none" />
+    {filled && <path d="M7 9.5h12.6l-1.4 5H8z" fill="currentColor" stroke="none" />}
+    <circle cx="9.5" cy="20" r="1.4" />
+    <circle cx="17.5" cy="20" r="1.4" />
+  </Icon>
+)
+export const CameraIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </Icon>
+)
+export const BarcodeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 5v14M7.5 5v14M11 5v14M13.5 5v14M17 5v14M20 5v14" />
+  </Icon>
+)
+export const ShareIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6" />
+  </Icon>
+)
+export const HeartIcon =({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <Icon strokeWidth={2.4} {...p}>
     <path
       d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"

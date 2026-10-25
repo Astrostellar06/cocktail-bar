@@ -1,6 +1,8 @@
 import { Link, useNavigate, useParams } from 'react-router'
 import { AbvBadge } from '../../components/CocktailCard'
+import { useConfirm } from '../../components/Dialog'
 import { FavoriteButton } from '../../components/FavoriteButton'
+import { ShoppingButton } from '../../components/ShoppingButton'
 import { BackIcon, CheckIcon, CloseIcon, CopyIcon, EditIcon, GlassIcon, PlusIcon, SwapIcon, TrashIcon } from '../../components/icons'
 import { useToast } from '../../components/Toast'
 import { GLASSES, METHODS } from '../../data/meta'
@@ -18,6 +20,7 @@ export function CocktailDetailPage() {
   const navigate = useNavigate()
   const goBack = useGoBack('/cocktails')
   const toast = useToast()
+  const confirm = useConfirm()
   const check = checkById.get(id)
 
   if (!check) {
@@ -40,17 +43,27 @@ export function CocktailDetailPage() {
   const substitutions = lines.filter((l) => l.status === 'substitut' && !l.line.optional)
 
   async function remove() {
-    const question = base
-      ? `Supprimer « ${cocktail.name} » de la liste ?\nTu pourras la restaurer depuis les réglages.`
-      : `Supprimer définitivement ta recette « ${cocktail.name} » ?`
-    if (!confirm(question)) return
+    const ok = await confirm({
+      title: `Supprimer « ${cocktail.name} » ?`,
+      message: base
+        ? 'La recette disparaît de la liste. Tu pourras la restaurer depuis les réglages.'
+        : 'Ta recette sera supprimée définitivement.',
+      confirmLabel: 'Supprimer',
+      danger: true,
+    })
+    if (!ok) return
     await deleteCocktail(cocktail.id)
     toast('Recette supprimée')
     navigate('/cocktails', { replace: true })
   }
 
   async function restore() {
-    if (!confirm(`Annuler tes modifications et revenir à la recette d'origine de « ${cocktail.name} » ?`)) return
+    const ok = await confirm({
+      title: "Revenir à l'original ?",
+      message: `Tes modifications de « ${cocktail.name} » seront perdues.`,
+      confirmLabel: 'Restaurer',
+    })
+    if (!ok) return
     await restoreOriginal(cocktail.id)
     toast("Recette d'origine restaurée")
   }
@@ -116,7 +129,8 @@ export function CocktailDetailPage() {
               const ingredient = ingredientById.get(id)
               return (
                 <div key={id} className="missing-row">
-                  <span>{name(id)}</span>
+                  <span className="grow">{name(id)}</span>
+                  {ingredient && <ShoppingButton ingredientId={id} name={ingredient.name} />}
                   {ingredient && (
                     <button
                       className="btn sm ghost"

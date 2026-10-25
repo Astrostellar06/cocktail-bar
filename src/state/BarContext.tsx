@@ -3,7 +3,7 @@ import { BASE_COCKTAILS } from '../data/cocktails'
 import { BASE_INGREDIENTS } from '../data/ingredients'
 import type { Cocktail, Ingredient } from '../data/types'
 import { estimateAbv, type AbvInfo } from '../lib/abv'
-import { db, readSettings, type BottleRow, type Settings } from '../lib/db'
+import { db, readSettings, type BottleRow, type Settings, type ShoppingRow } from '../lib/db'
 import { checkCocktail, type CocktailCheck } from '../lib/matching'
 import { shortName } from '../lib/text'
 import { usePageVisible, usePausableLiveQuery } from './liveQuery'
@@ -23,6 +23,9 @@ export interface BarState {
   abvById: Map<string, AbvInfo>
   /** Identifiants des recettes en favori. */
   favorites: Set<string>
+  /** Ingrédients de la liste de courses, du plus récent au plus ancien. */
+  shopping: ShoppingRow[]
+  shoppingIds: Set<string>
   /** Nombre de recettes classiques supprimées par l'utilisateur. */
   removedCount: number
   settings: Settings
@@ -38,10 +41,11 @@ export function BarProvider({ children }: { children: ReactNode }) {
   const storedCocktails = usePausableLiveQuery(() => db.cocktails.toArray(), visible)
   const removedRows = usePausableLiveQuery(() => db.removed.toArray(), visible)
   const favoriteRows = usePausableLiveQuery(() => db.favorites.toArray(), visible)
+  const shopping = usePausableLiveQuery(() => db.shopping.orderBy('addedAt').reverse().toArray(), visible)
   const settings = usePausableLiveQuery(readSettings, visible)
 
   const state = useMemo<BarState | null>(() => {
-    if (!bottles || !pantryRows || !customIngredients || !storedCocktails || !removedRows || !favoriteRows || !settings) {
+    if (!bottles || !pantryRows || !customIngredients || !storedCocktails || !removedRows || !favoriteRows || !shopping || !settings) {
       return null
     }
 
@@ -65,7 +69,7 @@ export function BarProvider({ children }: { children: ReactNode }) {
     const cocktailById = new Map(cocktails.map((c) => [c.id, c]))
     const checks = cocktails.map((c) => checkCocktail(c, owned, ingredientById, settings.almostThreshold))
     const checkById = new Map(checks.map((c) => [c.cocktail.id, c]))
-    const abvById = new Map(cocktails.map((c) => [c.id, estimateAbv(c, ingredientById)]))
+    const abvById = new Map(cocktails.map((c) => [c.id, estimateAbv(c, withBottleStrengths(ingredientById, bottles))]))
 
     return {
       bottles,
@@ -79,13 +83,31 @@ export function BarProvider({ children }: { children: ReactNode }) {
       checkById,
       abvById,
       favorites: new Set(favoriteRows.map((f) => f.id)),
+      shopping,
+      shoppingIds: new Set(shopping.map((r) => r.ingredientId)),
       removedCount: removed.size,
       settings,
     }
-  }, [bottles, pantryRows, customIngredients, storedCocktails, removedRows, favoriteRows, settings])
+  }, [bottles, pantryRows, customIngredients, storedCocktails, removedRows, favoriteRows, shopping, settings])
 
   if (!state) return <div className="loading">Chargement du bar…</div>
   return <BarContext.Provider value={state}>{children}</BarContext.Provider>
+}
+
+/**
+ * Ingrédients avec le degré réel des bouteilles du bar : si un whisky est à 46 % au lieu de 40 %, les cocktails
+ * qui l'utilisent en tiennent compte (moyenne s'il y a plusieurs bouteilles du même type).
+ */
+function withBottleStrengths(ingredientById: Map<string, Ingredient>, bottles: BottleRow[]): Map<string, Ingredient> {
+  if (!bottles.some((b) => b.abv !== undefined)) return ingredientById
+  const result = new Map(ingredientById)
+  for (const [id, ingredient] of ingredientById) {
+    const own = bottles.filter((b) => b.ingredientId === id)
+    if (!own.some((b) => b.abv !== undefined)) continue
+    const strengths = own.map((b) => b.abv ?? ingredient.abv ?? 0)
+    result.set(id, { ...ingredient, abv: strengths.reduce((a, b) => a + b, 0) / strengths.length })
+  }
+  return result
 }
 
 export function useBar(): BarState {

@@ -1,6 +1,8 @@
 import { useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
-import { BottleIcon, PlusIcon, SettingsIcon } from '../../components/icons'
+import { BottleVisual } from '../../components/BottleVisual'
+import { BottleIcon, CartIcon, PlusIcon, SettingsIcon } from '../../components/icons'
+import { ShoppingButton } from '../../components/ShoppingButton'
 import { useToast } from '../../components/Toast'
 import { GROUPS } from '../../data/ingredients'
 import type { Group } from '../../data/types'
@@ -13,7 +15,7 @@ import { AddBottleSheet } from './AddBottleSheet'
 import { BottleSheet } from './BottleSheet'
 
 export function BarPage() {
-  const { bottles, checks, ingredientById } = useBar()
+  const { bottles, checks, ingredientById, shopping } = useBar()
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<BottleRow | null>(null)
 
@@ -32,6 +34,10 @@ export function BarPage() {
       <header className="page-header">
         <h1 className="title">Mon bar</h1>
         <span className="spacer" />
+        <Link to="/courses" className="btn icon ghost with-badge" aria-label={`Liste de courses (${shopping.length})`}>
+          <CartIcon />
+          {shopping.length > 0 && <span className="count-badge">{shopping.length}</span>}
+        </Link>
         <Link to="/reglages" className="btn icon ghost" aria-label="Réglages">
           <SettingsIcon />
         </Link>
@@ -93,7 +99,7 @@ function Shelf({ group, bottles, onOpen }: { group: Group; bottles: BottleRow[];
             <button key={b.id} className="bottle" onClick={() => onOpen(b)}>
               <span className="label">{b.label || name}</span>
               {b.label && <span className="brand">{name}</span>}
-              <BottleIcon group={group.id} color={group.color} size={68} />
+              <BottleVisual bottle={b} group={group} size={68} />
             </button>
           )
         })}
@@ -160,7 +166,7 @@ function Suggestions() {
         <p className="muted" style={{ marginTop: 0 }}>
           Ce qui débloquerait le plus de cocktails, à lui seul.
         </p>
-        {suggestions.map((s, i) => {
+        {suggestions.map((s) => {
           const ingredient = ingredientById.get(s.ingredientId)
           if (!ingredient) return null
           return (
@@ -170,8 +176,9 @@ function Suggestions() {
                 <strong>{ingredient.name}</strong>
                 <small>{s.unlocks.map((c) => c.name).join(', ')}</small>
               </div>
+              <ShoppingButton ingredientId={ingredient.id} name={ingredient.name} />
               <button
-                className={`btn sm ${i === 0 ? 'teal' : 'ghost'}`}
+                className="btn sm ghost"
                 onClick={async () => {
                   await acquire(ingredient)
                   toast(`${ingredient.name} rejoint le bar !`)

@@ -8,6 +8,7 @@ import { CocktailDetailPage } from './pages/cocktails/CocktailDetailPage'
 import { CocktailEditorPage } from './pages/cocktails/CocktailEditorPage'
 import { CocktailsPage } from './pages/cocktails/CocktailsPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { ShoppingPage } from './pages/ShoppingPage'
 
 function Layout() {
   const location = useLocation()
@@ -15,7 +16,7 @@ function Layout() {
   const appRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
 
-  // Onglet courant : « Mon bar » (et ses réglages) ou « Cocktails » (liste, fiches, éditeur).
+  // Onglet courant : « Mon bar » (avec réglages et courses) ou « Cocktails » (liste, fiches, éditeur).
   const section = location.pathname.startsWith('/cocktails') ? 1 : 0
   const editing = location.pathname === '/cocktails/nouveau' || location.pathname.endsWith('/modifier')
 
@@ -65,6 +66,7 @@ const router = createHashRouter([
       { path: 'cocktails/:id', element: <CocktailDetailPage /> },
       { path: 'cocktails/:id/modifier', element: <CocktailEditorPage /> },
       { path: 'reglages', element: <SettingsPage /> },
+      { path: 'courses', element: <ShoppingPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

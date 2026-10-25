@@ -10,6 +10,11 @@ Application personnelle (PWA) pour gérer son bar et savoir quels cocktails on p
   (formules de Dave Arnold pour le shaker et le verre à mélange) ; il peut être saisi à la main dans l'éditeur.
 - **Recettes** : création, variantes, modification et suppression de toutes les recettes. Une classique modifiée
   peut revenir à l'original, une classique supprimée se restaure depuis les réglages.
+- **Scan des bouteilles** : lecture du code-barres (lecteur du navigateur, sinon ZXing chargé à la demande),
+  fiche produit sur [Open Food Facts](https://world.openfoodfacts.org), reconnaissance du type et du degré
+  (`src/lib/openFoodFacts.ts`), photo détourée dans le navigateur (`src/lib/cutout.ts`). Tout reste modifiable.
+- **Degré par bouteille** : utilisé dans le calcul du degré des cocktails.
+- **Liste de courses** : depuis les recettes, les prochains achats ou la liste elle-même ; partageable.
 - **Favoris** (cœur sur les cartes et les fiches) et filtre « Favoris ».
 - **Navigation** : balayage horizontal entre « Mon bar » et « Cocktails », pastille de la barre d'onglets animée.
 - Données stockées **uniquement sur l'appareil** (IndexedDB), avec export/import JSON dans les réglages.

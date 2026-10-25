@@ -4,13 +4,14 @@ const FORMAT = 'mon-bar'
 const VERSION = 1
 
 export async function exportData(): Promise<Blob> {
-  const [bottles, pantry, ingredients, cocktails, removed, favorites, settings] = await Promise.all([
+  const [bottles, pantry, ingredients, cocktails, removed, favorites, shopping, settings] = await Promise.all([
     db.bottles.toArray(),
     db.pantry.toArray(),
     db.ingredients.toArray(),
     db.cocktails.toArray(),
     db.removed.toArray(),
     db.favorites.toArray(),
+    db.shopping.toArray(),
     db.settings.toArray(),
   ])
   const payload = {
@@ -23,6 +24,7 @@ export async function exportData(): Promise<Blob> {
     cocktails,
     removed,
     favorites,
+    shopping,
     settings,
   }
   return new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
@@ -43,7 +45,7 @@ export async function importData(file: File) {
   if (data?.format !== FORMAT || !Array.isArray(data.bottles)) {
     throw new Error("Ce fichier n'est pas une sauvegarde de Mon Bar.")
   }
-  const tables = [db.bottles, db.pantry, db.ingredients, db.cocktails, db.removed, db.favorites, db.settings]
+  const tables = [db.bottles, db.pantry, db.ingredients, db.cocktails, db.removed, db.favorites, db.shopping, db.settings]
   await db.transaction('rw', tables, async () => {
     await Promise.all(tables.map((t) => t.clear()))
     await db.bottles.bulkAdd(data.bottles)
@@ -52,6 +54,7 @@ export async function importData(file: File) {
     await db.cocktails.bulkAdd(data.cocktails ?? [])
     await db.removed.bulkAdd(data.removed ?? [])
     await db.favorites.bulkAdd(data.favorites ?? [])
+    await db.shopping.bulkAdd(data.shopping ?? [])
     await db.settings.bulkAdd(data.settings ?? [])
   })
 }

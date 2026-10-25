@@ -5,6 +5,7 @@ import { createIngredient } from '../lib/actions'
 import { normalize } from '../lib/text'
 import { useBar } from '../state/BarContext'
 import { CheckIcon, CloseIcon, PlusIcon, SearchIcon } from './icons'
+import { Select } from './Select'
 
 interface Props {
   /** Reçoit l'id de l'ingrédient, ou « f:famille » pour une famille. */
@@ -16,6 +17,8 @@ interface Props {
   /** Permet de créer un ingrédient qui n'est pas dans la liste. */
   allowCreate?: boolean
   createLabel?: string
+  /** Valeurs proposées pour le nouvel ingrédient (ex. produit scanné au type inconnu). */
+  createDefaults?: { name: string; group?: GroupId }
   /** Choix à ne pas proposer (déjà sélectionnés). */
   exclude?: string[]
   placeholder?: string
@@ -28,6 +31,7 @@ export function IngredientList({
   families,
   allowCreate,
   createLabel = 'Pas dans la liste ? Créer un ingrédient',
+  createDefaults,
   exclude = [],
   placeholder,
 }: Props) {
@@ -58,7 +62,6 @@ export function IngredientList({
         <input
           className="input"
           type="search"
-          autoFocus={!creating}
           placeholder={placeholder ?? 'Rechercher un ingrédient…'}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -73,7 +76,8 @@ export function IngredientList({
       {allowCreate &&
         (creating ? (
           <CreateIngredientForm
-            initialName={query}
+            initialName={query || createDefaults?.name || ''}
+            initialGroup={createDefaults?.group}
             groups={allowedGroups}
             onCancel={() => setCreating(false)}
             onCreated={onSelect}
@@ -135,18 +139,20 @@ function guessGroup(name: string, allowed: GroupId[]): GroupId {
 
 function CreateIngredientForm({
   initialName,
+  initialGroup,
   groups,
   onCancel,
   onCreated,
 }: {
   initialName: string
+  initialGroup?: GroupId
   groups: GroupId[]
   onCancel: () => void
   onCreated: (id: string) => void
 }) {
   const { ingredients } = useBar()
   const [name, setName] = useState(initialName.trim())
-  const [group, setGroup] = useState<GroupId | null>(null)
+  const [group, setGroup] = useState<GroupId | null>(initialGroup && groups.includes(initialGroup) ? initialGroup : null)
   const [abv, setAbv] = useState<string | null>(null)
 
   // Tant que l'utilisateur n'a rien choisi, le rayon et le degré suivent le nom saisi.
@@ -184,23 +190,18 @@ function CreateIngredientForm({
           onChange={(e) => setName(e.target.value)}
         />
       </label>
-      <label className="field">
+      <div className="field">
         <span>Rayon</span>
-        <select
-          className="select"
+        <Select
+          title="Rayon"
           value={effectiveGroup}
-          onChange={(e) => {
-            setGroup(e.target.value as GroupId)
+          options={groups.map((g) => ({ value: g, label: GROUP_BY_ID.get(g)!.name }))}
+          onChange={(g) => {
+            setGroup(g)
             setAbv(null)
           }}
-        >
-          {groups.map((g) => (
-            <option key={g} value={g}>
-              {GROUP_BY_ID.get(g)!.name}
-            </option>
-          ))}
-        </select>
-      </label>
+        />
+      </div>
       {defaultAbv !== undefined && (
         <label className="field">
           <span>Degré d'alcool (%)</span>

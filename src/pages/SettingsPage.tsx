@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useConfirm } from '../components/Dialog'
 import { BackIcon, DownloadIcon, TrashIcon, UploadIcon } from '../components/icons'
 import { useToast } from '../components/Toast'
 import { restoreRemoved, saveSetting } from '../lib/actions'
@@ -13,6 +14,7 @@ export function SettingsPage() {
   const edited = cocktails.filter((c) => c.edited).length
   const goBack = useGoBack('/')
   const toast = useToast()
+  const confirm = useConfirm()
   const fileInput = useRef<HTMLInputElement>(null)
   const [persisted, setPersisted] = useState<boolean | null>(null)
 
@@ -26,12 +28,18 @@ export function SettingsPage() {
   }
 
   async function doImport(file: File) {
-    if (!confirm('Remplacer toutes les données actuelles par celles de la sauvegarde ?')) return
+    const ok = await confirm({
+      title: 'Restaurer la sauvegarde ?',
+      message: 'Toutes les données actuelles seront remplacées par celles du fichier.',
+      confirmLabel: 'Restaurer',
+      danger: true,
+    })
+    if (!ok) return
     try {
       await importData(file)
       toast('Sauvegarde restaurée !')
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Import impossible.')
+      await confirm({ title: 'Import impossible', message: err instanceof Error ? err.message : undefined, alertOnly: true })
     }
   }
 
@@ -41,7 +49,13 @@ export function SettingsPage() {
   }
 
   async function doReset() {
-    if (!confirm('Effacer tout le bar et toutes tes recettes ? Cette action est définitive.')) return
+    const ok = await confirm({
+      title: 'Tout effacer ?',
+      message: 'Le bar, les recettes perso, les favoris et la liste de courses seront supprimés. Cette action est définitive.',
+      confirmLabel: 'Tout effacer',
+      danger: true,
+    })
+    if (!ok) return
     await resetData()
     window.location.reload()
   }

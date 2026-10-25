@@ -7,11 +7,23 @@ export interface BottleRow {
   ingredientId: string
   /** Marque ou nom de la bouteille (facultatif). */
   label?: string
+  /** Degré de cette bouteille, s'il diffère de celui du type (ex. un whisky à 46 %). */
+  abv?: number
+  /** Visuel détouré (data URL), obtenu par scan ou photo. */
+  image?: string
+  /** Code-barres scanné. */
+  barcode?: string
   addedAt: number
 }
 
 export interface PantryRow {
   ingredientId: string
+}
+
+/** Ingrédient à acheter. */
+export interface ShoppingRow {
+  ingredientId: string
+  addedAt: number
 }
 
 /** Recette classique masquée par l'utilisateur. */
@@ -45,11 +57,12 @@ class BarDatabase extends Dexie {
   /** Recettes classiques supprimées (restaurables). */
   removed!: Table<RemovedRow, string>
   favorites!: Table<FavoriteRow, string>
+  shopping!: Table<ShoppingRow, string>
   settings!: Table<SettingRow, string>
 
   constructor() {
     super('mon-bar')
-    this.version(3).stores({
+    this.version(4).stores({
       bottles: '++id, ingredientId',
       pantry: 'ingredientId',
       ingredients: 'id',
@@ -57,6 +70,7 @@ class BarDatabase extends Dexie {
       settings: 'key',
       removed: 'id',
       favorites: 'id',
+      shopping: 'ingredientId, addedAt',
     })
     this.on('populate', (tx) => {
       tx.table('pantry').bulkAdd(DEFAULT_PANTRY.map((ingredientId) => ({ ingredientId })))

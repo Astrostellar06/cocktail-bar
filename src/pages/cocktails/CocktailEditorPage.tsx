@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { BackIcon, GlassIcon, PlusIcon, TrashIcon } from '../../components/icons'
 import { IngredientList } from '../../components/IngredientList'
+import { Select } from '../../components/Select'
 import { Sheet } from '../../components/Sheet'
 import { useToast } from '../../components/Toast'
 import { DRINK_COLORS, GLASS_SHORT, GLASSES, METHODS, UNIT_OPTIONS } from '../../data/meta'
@@ -161,16 +162,15 @@ function Editor({ existing, source }: { existing?: Cocktail; source?: Cocktail }
             />
           ))}
         </div>
-        <label className="field">
+        <div className="field">
           <span>Méthode</span>
-          <select className="select" value={method} onChange={(e) => setMethod(e.target.value as MethodId)}>
-            {(Object.keys(METHODS) as MethodId[]).map((m) => (
-              <option key={m} value={m}>
-                {METHODS[m]}
-              </option>
-            ))}
-          </select>
-        </label>
+          <Select
+            title="Méthode"
+            value={method}
+            options={(Object.keys(METHODS) as MethodId[]).map((m) => ({ value: m, label: METHODS[m] }))}
+            onChange={setMethod}
+          />
+        </div>
       </section>
 
       <section className="card stack">
@@ -203,18 +203,12 @@ function Editor({ existing, source }: { existing?: Cocktail; source?: Cocktail }
                 disabled={l.unit === 'rincage'}
                 onChange={(e) => updateLine(l.key, { qty: e.target.value })}
               />
-              <select
-                className="select"
+              <Select
+                title="Unité"
                 value={l.unit}
-                onChange={(e) => updateLine(l.key, { unit: e.target.value as UnitId | '' })}
-              >
-                <option value="">— sans unité —</option>
-                {UNIT_OPTIONS.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.label}
-                  </option>
-                ))}
-              </select>
+                options={[{ value: '' as const, label: '— sans unité —' }, ...UNIT_OPTIONS.map((u) => ({ value: u.id, label: u.label }))]}
+                onChange={(unit) => updateLine(l.key, { unit })}
+              />
             </div>
             <input
               className="input"
