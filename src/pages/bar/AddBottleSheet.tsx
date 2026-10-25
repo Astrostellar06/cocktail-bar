@@ -18,7 +18,7 @@ type Step =
   | { kind: 'details'; ingredientId: string; barcode?: string }
   | { kind: 'scan' }
   | { kind: 'lookup'; barcode: string }
-  | { kind: 'unknown'; barcode: string; product?: ProductInfo; match?: ProductMatch; image?: string }
+  | { kind: 'unknown'; barcode: string; product?: ProductInfo; match?: ProductMatch }
   | { kind: 'added'; bottleId: number }
   | { kind: 'error'; barcode: string; message: string }
 
@@ -27,9 +27,28 @@ type Step =
  * ajouté aussitôt, puis reste modifiable. Le panneau reste ouvert pour enchaîner.
  */
 export function AddBottleSheet({ onClose }: { onClose: () => void }) {
-  const { ingredients, ingredientById, bottles } = useBar()
+  const { ingredients, ingredientById, bottles, settings } = useBar()
   const toast = useToast()
   const [step, setStep] = useState<Step>({ kind: 'pick' })
+  const [cutting, setCutting] = useState<Set<number>>(() => new Set())
+
+  /** Détoure la photo du produit en arrière-plan ; la bouteille l'affichera dès qu'elle sera prête. */
+  function cutoutInBackground(bottleId: number, imageUrl?: string) {
+    if (!imageUrl || !settings.autoCutout) return
+    setCutting((ids) => new Set(ids).add(bottleId))
+    cutoutBottle(imageUrl)
+      .then(async (image) => {
+        if (image) await updateBottle(bottleId, { image })
+        else toast('Photo du produit inexploitable : tu peux photographier la bouteille toi-même.')
+      })
+      .finally(() =>
+        setCutting((ids) => {
+          const next = new Set(ids)
+          next.delete(bottleId)
+          return next
+        }),
+      )
+  }
 
   async function handleBarcode(barcode: string) {
     setStep({ kind: 'lookup', barcode })
@@ -37,14 +56,14 @@ export function AddBottleSheet({ onClose }: { onClose: () => void }) {
       const product = await lookupProduct(barcode)
       if (!product) return setStep({ kind: 'unknown', barcode })
       const match = matchProduct(product, ingredients)
-      const image = product.imageUrl ? ((await cutoutBottle(product.imageUrl).catch(() => null)) ?? undefined) : undefined
       if (match.ingredientId && ingredientById.has(match.ingredientId)) {
         const label = productLabel(product)
-        const bottleId = await addBottle(match.ingredientId, { label, abv: product.abv, image, barcode })
+        const bottleId = await addBottle(match.ingredientId, { label, abv: product.abv, barcode })
         toast(`${label || ingredientById.get(match.ingredientId)!.name} rejoint le bar !`)
         setStep({ kind: 'added', bottleId })
+        cutoutInBackground(bottleId, product.imageUrl)
       } else {
-        setStep({ kind: 'unknown', barcode, product, match, image })
+        setStep({ kind: 'unknown', barcode, product, match })
       }
     } catch {
       setStep({ kind: 'error', barcode, message: 'Recherche impossible : vérifie ta connexion internet.' })
@@ -119,14 +138,10 @@ export function AddBottleSheet({ onClose }: { onClose: () => void }) {
           onChoose={async (ingredientId) => {
             if (!step.product) return setStep({ kind: 'details', ingredientId, barcode: step.barcode })
             const label = productLabel(step.product)
-            const bottleId = await addBottle(ingredientId, {
-              label,
-              abv: step.product.abv,
-              image: step.image,
-              barcode: step.barcode,
-            })
+            const bottleId = await addBottle(ingredientId, { label, abv: step.product.abv, barcode: step.barcode })
             toast(`${label} rejoint le bar !`)
             setStep({ kind: 'added', bottleId })
+            cutoutInBackground(bottleId, step.product.imageUrl)
           }}
           onCancel={() => setStep({ kind: 'pick' })}
         />
@@ -144,6 +159,7 @@ export function AddBottleSheet({ onClose }: { onClose: () => void }) {
               <BottleForm
                 key={bottle.id}
                 initial={bottle}
+                pendingImage={cutting.has(bottle.id!)}
                 submitLabel="Enregistrer les modifications"
                 onSubmit={async (values) => {
                   await updateBottle(bottle.id!, values)
@@ -185,11 +201,11 @@ function UnknownProduct({
   onChoose: (ingredientId: string) => void
   onCancel: () => void
 }) {
-  const { product, match, image } = step
+  const { product, match } = step
   return (
     <>
       <div className="card row bottle-head">
-        {image && <img className="bottle-photo" src={image} alt="" style={{ height: 80, maxWidth: 72 }} />}
+        {product?.imageUrl && <img className="product-thumb" src={product.imageUrl} alt="" />}
         <div className="grow">
           {product ? (
             <>

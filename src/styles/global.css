@@ -1462,3 +1462,17 @@ h3 {
     transform: rotate(360deg);
   }
 }
+
+.spinner.small {
+  width: 18px;
+  height: 18px;
+  border-width: 3px;
+  flex: none;
+}
+
+.product-thumb {
+  height: 80px;
+  max-width: 72px;
+  object-fit: contain;
+  border-radius: 8px;
+}

@@ -90,6 +90,23 @@ export function SettingsPage() {
       </section>
 
       <section className="card stack">
+        <h2 className="section-title">Scan des bouteilles</h2>
+        <label className="checkbox">
+          <input
+            type="checkbox"
+            checked={settings.autoCutout}
+            onChange={(e) => saveSetting('autoCutout', e.target.checked)}
+          />
+          Détourer automatiquement la photo des bouteilles scannées
+        </label>
+        <p className="muted" style={{ margin: 0 }}>
+          Le détourage est fait sur le téléphone par un modèle d'IA (≈ 90 Mo), téléchargé lors du premier détourage
+          puis gardé en mémoire. Il prend quelques secondes par bouteille, en arrière-plan. Pour tes propres photos :
+          bouteille de face, entière, avec un peu de marge autour.
+        </p>
+      </section>
+
+      <section className="card stack">
         <h2 className="section-title">Sauvegarde</h2>
         <p className="muted" style={{ margin: 0 }}>
           Tes données sont stockées uniquement sur cet appareil. Exporte-les de temps en temps pour ne rien perdre

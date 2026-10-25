@@ -6,6 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   // Sur GitHub Pages, l'app vit dans un sous-dossier (/<dépôt>/) : la CI le passe via BASE_PATH.
   base: process.env.BASE_PATH ?? '/',
+  // Le worker de détourage charge la bibliothèque d'IA à la demande : il doit être un module ES.
+  worker: { format: 'es' },
   build: {
     // Un seul bundle, mis en cache par le service worker : sa taille n'est pas critique.
     chunkSizeWarningLimit: 700,
@@ -34,6 +36,8 @@ export default defineConfig({
       workbox: {
         // woff2 seulement : le woff de secours ne sert qu'aux très vieux navigateurs.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // Le détourage (bibliothèque d'IA, plusieurs Mo) n'est téléchargé qu'à sa première utilisation.
+        globIgnores: ['**/cutout.worker-*.js', '**/ort-*.mjs', '**/ort-*.wasm'],
       },
     }),
   ],

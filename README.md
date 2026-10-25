@@ -12,7 +12,10 @@ Application personnelle (PWA) pour gérer son bar et savoir quels cocktails on p
   peut revenir à l'original, une classique supprimée se restaure depuis les réglages.
 - **Scan des bouteilles** : lecture du code-barres (lecteur du navigateur, sinon ZXing chargé à la demande),
   fiche produit sur [Open Food Facts](https://world.openfoodfacts.org), reconnaissance du type et du degré
-  (`src/lib/openFoodFacts.ts`), photo détourée dans le navigateur (`src/lib/cutout.ts`). Tout reste modifiable.
+  (`src/lib/openFoodFacts.ts`). Tout reste modifiable.
+- **Détourage des photos** : modèle RMBG-1.4 (BRIA, usage non commercial) exécuté sur l'appareil via
+  transformers.js, dans un Web Worker (`src/lib/cutout.worker.ts`) : carte graphique (WebGPU, fp16, ≈ 1 à 3 s)
+  si disponible, sinon processeur sur une image réduite. Modèle téléchargé à la première utilisation.
 - **Degré par bouteille** : utilisé dans le calcul du degré des cocktails.
 - **Liste de courses** : depuis les recettes, les prochains achats ou la liste elle-même ; partageable.
 - **Favoris** (cœur sur les cartes et les fiches) et filtre « Favoris ».

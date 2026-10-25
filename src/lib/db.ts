@@ -38,9 +38,11 @@ export interface FavoriteRow {
 
 export interface Settings {
   almostThreshold: number
+  /** Détourer automatiquement la photo des bouteilles scannées (modèle d'IA téléchargé à la première utilisation). */
+  autoCutout: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { almostThreshold: 1 }
+export const DEFAULT_SETTINGS: Settings = { almostThreshold: 1, autoCutout: true }
 
 interface SettingRow {
   key: keyof Settings
