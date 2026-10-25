@@ -10,7 +10,11 @@ Application personnelle (PWA) pour gérer son bar et savoir quels cocktails on p
   (formules de Dave Arnold pour le shaker et le verre à mélange) ; il peut être saisi à la main dans l'éditeur.
 - **Recettes** : création, variantes, modification et suppression de toutes les recettes. Une classique modifiée
   peut revenir à l'original, une classique supprimée se restaure depuis les réglages.
+- **Favoris** (cœur sur les cartes et les fiches) et filtre « Favoris ».
+- **Navigation** : balayage horizontal entre « Mon bar » et « Cocktails », pastille de la barre d'onglets animée.
 - Données stockées **uniquement sur l'appareil** (IndexedDB), avec export/import JSON dans les réglages.
+  Une page en arrière-plan ne lit pas la base (elle se met à jour en revenant au premier plan), et une alerte
+  s'affiche si un enregistrement reste bloqué par un autre onglet.
 
 ## Commandes
 
@@ -53,4 +57,4 @@ Prérequis (une fois) : dans le dépôt, *Settings → Pages → Source : GitHub
 Éditer `src/data/cocktails.ts` ou `src/data/ingredients.ts`, puis lancer `npm test` : les tests vérifient
 que chaque recette référence des ingrédients existants et que chaque ingrédient est utilisé.
 
-Les icônes PWA sont générées depuis `public/logo.svg` avec `npm run icons`.
+Les icônes PWA sont générées depuis `public/logo.svg` avec `npm run icons` (réglages dans `pwa-assets.config.ts`).

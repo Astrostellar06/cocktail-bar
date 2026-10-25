@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "oxlint",
-    "icons": "pwa-assets-generator --preset minimal-2023 public/logo.svg"
+    "icons": "pwa-assets-generator"
   },
   "dependencies": {
     "@fontsource/bungee": "^5.3.0",

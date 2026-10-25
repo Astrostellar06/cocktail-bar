@@ -83,9 +83,39 @@ h3 {
 /* ─── Layout ───────────────────────────────────────────── */
 
 .app {
+  --swipe: 0;
   max-width: 560px;
   margin: 0 auto;
   min-height: 100dvh;
+  /* Les pages qui glissent ne doivent pas créer de défilement horizontal. */
+  overflow-x: clip;
+}
+
+.tab-page {
+  /* Le navigateur garde le défilement vertical et le zoom ; le balayage horizontal est géré par l'app. */
+  touch-action: pan-y pinch-zoom;
+}
+
+.tab-page.from-right {
+  animation: enter-from-right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.tab-page.from-left {
+  animation: enter-from-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes enter-from-right {
+  from {
+    transform: translateX(35%);
+    opacity: 0;
+  }
+}
+
+@keyframes enter-from-left {
+  from {
+    transform: translateX(-35%);
+    opacity: 0;
+  }
 }
 
 .page {
@@ -226,6 +256,10 @@ h3 {
 
 .btn.block {
   width: 100%;
+  /* Les longs libellés passent à la ligne plutôt que de déborder. */
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
 }
 
 .btn.pink {
@@ -456,6 +490,7 @@ h3 {
 }
 
 .tabbar nav {
+  position: relative;
   pointer-events: auto;
   max-width: 528px;
   margin: 0 auto;
@@ -481,9 +516,42 @@ h3 {
   font-size: 15px;
 }
 
+.tabbar a {
+  position: relative;
+  z-index: 1;
+  transition: color 0.2s;
+}
+
 .tabbar a.active {
-  background: var(--yellow);
   color: var(--ink);
+}
+
+/* Pastille jaune : glisse d'un onglet à l'autre, avec un léger rebond. */
+.tab-indicator {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 8px;
+  width: calc((100% - 24px) / 2);
+  border-radius: 16px;
+  background: var(--yellow);
+  transform: translateX(calc((var(--tab) + var(--swipe)) * (100% + 8px)));
+  transition: transform 0.35s cubic-bezier(0.3, 1.35, 0.5, 1);
+}
+
+.app[data-swiping] .tab-indicator {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-page.from-right,
+  .tab-page.from-left {
+    animation: none;
+  }
+
+  .tab-indicator {
+    transition: none;
+  }
 }
 
 /* ─── Feuille modale (bottom sheet) ────────────────────── */
@@ -557,7 +625,7 @@ h3 {
   transform: translateX(-50%);
   z-index: 60;
   width: max-content;
-  max-width: calc(100% - 32px);
+  max-width: min(528px, calc(100% - 32px));
   text-align: center;
   padding: 10px 18px;
   background: var(--teal);
@@ -566,6 +634,11 @@ h3 {
   box-shadow: var(--shadow-sm);
   font-weight: 700;
   animation: slide-up 0.2s ease-out;
+}
+
+.toast.warning {
+  background: var(--yellow);
+  border-radius: 16px;
 }
 
 /* ─── Liste d'ingrédients (sélecteur) ──────────────────── */

@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie'
+import Dexie, { type DBCore, type Middleware, type Table } from 'dexie'
 import { DEFAULT_PANTRY } from '../data/ingredients'
 import type { Cocktail, Ingredient } from '../data/types'
 
@@ -61,7 +61,34 @@ class BarDatabase extends Dexie {
     this.on('populate', (tx) => {
       tx.table('pantry').bulkAdd(DEFAULT_PANTRY.map((ingredientId) => ({ ingredientId })))
     })
+    this.use(stuckWriteWatchdog)
   }
+}
+
+/** Événement émis quand une écriture n'aboutit pas : la base est verrouillée par un autre onglet. */
+export const STUCK_WRITE_EVENT = 'mon-bar:ecriture-bloquee'
+const STUCK_AFTER_MS = 4000
+
+/**
+ * Surveille chaque écriture. Une écriture qui ne se termine pas attend un verrou tenu ailleurs, typiquement un
+ * onglet Chrome mis en pause par Android au milieu d'une lecture : l'écran l'afficherait, mais elle serait perdue.
+ */
+const stuckWriteWatchdog: Middleware<DBCore> = {
+  stack: 'dbcore',
+  name: 'stuckWriteWatchdog',
+  create: (down) => ({
+    ...down,
+    table: (name) => {
+      const table = down.table(name)
+      return {
+        ...table,
+        mutate: (req) => {
+          const timer = setTimeout(() => window.dispatchEvent(new Event(STUCK_WRITE_EVENT)), STUCK_AFTER_MS)
+          return table.mutate(req).finally(() => clearTimeout(timer))
+        },
+      }
+    },
+  }),
 }
 
 export const db = new BarDatabase()

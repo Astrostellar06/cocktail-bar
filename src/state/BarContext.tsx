@@ -1,4 +1,3 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import { BASE_COCKTAILS } from '../data/cocktails'
 import { BASE_INGREDIENTS } from '../data/ingredients'
@@ -7,6 +6,7 @@ import { estimateAbv, type AbvInfo } from '../lib/abv'
 import { db, readSettings, type BottleRow, type Settings } from '../lib/db'
 import { checkCocktail, type CocktailCheck } from '../lib/matching'
 import { shortName } from '../lib/text'
+import { usePageVisible, usePausableLiveQuery } from './liveQuery'
 
 export interface BarState {
   bottles: BottleRow[]
@@ -31,13 +31,14 @@ export interface BarState {
 const BarContext = createContext<BarState | null>(null)
 
 export function BarProvider({ children }: { children: ReactNode }) {
-  const bottles = useLiveQuery(() => db.bottles.orderBy('id').toArray(), [])
-  const pantryRows = useLiveQuery(() => db.pantry.toArray(), [])
-  const customIngredients = useLiveQuery(() => db.ingredients.toArray(), [])
-  const storedCocktails = useLiveQuery(() => db.cocktails.toArray(), [])
-  const removedRows = useLiveQuery(() => db.removed.toArray(), [])
-  const favoriteRows = useLiveQuery(() => db.favorites.toArray(), [])
-  const settings = useLiveQuery(readSettings, [])
+  const visible = usePageVisible()
+  const bottles = usePausableLiveQuery(() => db.bottles.orderBy('id').toArray(), visible)
+  const pantryRows = usePausableLiveQuery(() => db.pantry.toArray(), visible)
+  const customIngredients = usePausableLiveQuery(() => db.ingredients.toArray(), visible)
+  const storedCocktails = usePausableLiveQuery(() => db.cocktails.toArray(), visible)
+  const removedRows = usePausableLiveQuery(() => db.removed.toArray(), visible)
+  const favoriteRows = usePausableLiveQuery(() => db.favorites.toArray(), visible)
+  const settings = usePausableLiveQuery(readSettings, visible)
 
   const state = useMemo<BarState | null>(() => {
     if (!bottles || !pantryRows || !customIngredients || !storedCocktails || !removedRows || !favoriteRows || !settings) {
